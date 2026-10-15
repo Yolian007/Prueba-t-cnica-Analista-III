@@ -1,0 +1,135 @@
+<div class="app-container">
+  <!-- Header -->
+  <header class="app-header">
+    <h1>📋 Conciliador de Facturas y Retenciones</h1>
+    <p>Sistema de conciliación entre facturas de proveedores y registros contables</p>
+  </header>
+
+  <main class="app-content">
+    <!-- File Upload Section -->
+    <section class="upload-section">
+      <h2>Cargar Archivos</h2>
+      <div class="upload-grid">
+        <!-- Facturas file input -->
+        <div class="upload-card">
+          <div class="upload-icon">📄</div>
+          <h3>Facturas</h3>
+          <p>Seleccione el archivo facturas.csv</p>
+          <input type="file" accept=".csv" (change)="onFacturasSelected($event)" #facturasInput>
+          <button class="btn-select" (click)="facturasInput.click()">Seleccionar archivo</button>
+          <span class="file-name" *ngIf="facturasFile">✅ {{facturasFile.name}}</span>
+        </div>
+        <!-- Contabilidad file input -->
+        <div class="upload-card">
+          <div class="upload-icon">📊</div>
+          <h3>Contabilidad</h3>
+          <p>Seleccione el archivo contabilidad.csv</p>
+          <input type="file" accept=".csv" (change)="onContabilidadSelected($event)" #contabilidadInput>
+          <button class="btn-select" (click)="contabilidadInput.click()">Seleccionar archivo</button>
+          <span class="file-name" *ngIf="contabilidadFile">✅ {{contabilidadFile.name}}</span>
+        </div>
+      </div>
+      
+      <!-- Process button -->
+      <div class="process-section">
+        <button class="btn-process" 
+                (click)="procesarArchivos()" 
+                [disabled]="!facturasFile || !contabilidadFile || cargando">
+          <span *ngIf="!cargando">🔍 Procesar Conciliación</span>
+          <span *ngIf="cargando">⏳ Procesando...</span>
+        </button>
+      </div>
+
+      <!-- Error message -->
+      <div class="error-message" *ngIf="mensajeError">
+        ⚠️ {{mensajeError}}
+      </div>
+    </section>
+
+    <!-- Results Section (shown only when results exist) -->
+    <ng-container *ngIf="resultados">
+      <!-- Summary Cards -->
+      <section class="summary-section">
+        <h2>Resumen de Conciliación</h2>
+        <div class="summary-grid">
+          <div class="summary-card total">
+            <div class="summary-number">{{resultados.resumen.total_facturas}}</div>
+            <div class="summary-label">Total Facturas</div>
+          </div>
+          <div class="summary-card correctas">
+            <div class="summary-number">{{resultados.resumen.correctas}}</div>
+            <div class="summary-label">Correctas</div>
+          </div>
+          <div class="summary-card inconsistencias">
+            <div class="summary-number">{{resultados.resumen.con_inconsistencia}}</div>
+            <div class="summary-label">Con Inconsistencias</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results Table -->
+      <section class="results-section">
+        <div class="results-header">
+          <h2>Detalle de Resultados</h2>
+          <div class="filter-controls">
+            <label>Filtrar por estado:</label>
+            <select (change)="onFiltroChange($event)">
+              <option value="Todos">Todos</option>
+              <option value="Correcta">Correcta</option>
+              <option value="Con inconsistencia">Con inconsistencia</option>
+            </select>
+            <span class="filter-count">Mostrando {{resultadosFiltrados.length}} de {{resultados.resultados.length}} facturas</span>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Factura</th>
+                <th>Proveedor</th>
+                <th>Concepto</th>
+                <th class="num">Base Gravable</th>
+                <th class="num">IVA Reportado</th>
+                <th class="num">IVA Esperado</th>
+                <th class="num">Total Reportado</th>
+                <th class="num">Total Esperado</th>
+                <th>Estado</th>
+                <th>Causas</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of resultadosFiltrados" 
+                  [class.row-correcta]="r.estado === 'Correcta'"
+                  [class.row-inconsistencia]="r.estado === 'Con inconsistencia'">
+                <td class="id-cell">{{r.id_factura}}</td>
+                <td>{{r.nit_proveedor || '—'}}</td>
+                <td>{{r.concepto || '—'}}</td>
+                <td class="num">{{formatearNumero(r.base_gravable)}}</td>
+                <td class="num" [class.valor-diferente]="r.iva_reportado !== r.iva_esperado">{{formatearNumero(r.iva_reportado)}}</td>
+                <td class="num">{{formatearNumero(r.iva_esperado)}}</td>
+                <td class="num" [class.valor-diferente]="r.total_reportado !== r.total_esperado">{{formatearNumero(r.total_reportado)}}</td>
+                <td class="num">{{formatearNumero(r.total_esperado)}}</td>
+                <td>
+                  <span class="badge" [class.badge-correcta]="r.estado === 'Correcta'" [class.badge-inconsistencia]="r.estado === 'Con inconsistencia'">
+                    {{r.estado}}
+                  </span>
+                </td>
+                <td class="causas-cell">
+                  <ul *ngIf="r.inconsistencias.length > 0">
+                    <li *ngFor="let causa of r.inconsistencias">{{causa}}</li>
+                  </ul>
+                  <span *ngIf="r.inconsistencias.length === 0" class="sin-causas">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </ng-container>
+  </main>
+
+  <footer class="app-footer">
+    <p>Conciliador de Facturas y Retenciones — Prueba Técnica Analista III</p>
+  </footer>
+</div>
